@@ -23,9 +23,7 @@
               window.CQContent[id].stages && window.CQContent[id].stages.length);
   }
   function isUnlocked(w) {
-    if (!w.requires) return true;
-    if (!hasContent(w.requires)) return true;       // prérequis pas encore jouable → on n'enferme pas
-    return (S.get().worlds[w.requires] || 0) >= 0.5;
+    return true; // TEMPORAIRE : tous les mondes déverrouillés (aucune condition)
   }
 
   const BADGES = [
