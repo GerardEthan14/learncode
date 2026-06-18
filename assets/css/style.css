@@ -236,6 +236,11 @@ code { font-family: 'VT323', monospace; color: var(--neon-3); background: rgba(0
 .editor-out { font-size: 20px; min-height: 26px; margin-bottom: 8px; }
 .editor-out.ok { color: var(--ok); }
 .editor-out.ko { color: var(--ko); }
+.editor-actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+
+.solution-box { width: 100%; margin-top: 8px; border-top: 2px dashed var(--dim); padding-top: 14px; }
+.sol-tag { font-family: var(--font-title); font-size: 11px; color: var(--neon-3); margin-bottom: 10px; }
+.sol-hint { font-size: 19px; color: var(--dim); }
 
 .feedback { border-color: var(--ok); }
 .fb-head { font-family: var(--font-title); font-size: 15px; color: var(--ok); margin-bottom: 12px; }

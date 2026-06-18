@@ -2,13 +2,16 @@
    CODEQUEST — Moteur de monde (générique)
    Déroule les "stages" d'un monde : mini-leçon → défi → feedback → bilan.
    Gère le score, les combos, l'XP, les montées de niveau et les badges.
+   Le code du mini-éditeur est exécuté dans un Worker isolé avec chrono de
+   sécurité (anti boucle infinie).
    Exposé via window.CQEngine.start(worldId, areaEl, onComplete).
    ===================================================================== */
 (function () {
   const S = window.GameState;
 
-  const BASE_XP = 10;   // XP de base par bonne réponse
-  const COMBO_BONUS = 5; // XP en plus par palier de combo
+  const BASE_XP = 10;       // XP de base par bonne réponse
+  const COMBO_BONUS = 5;    // XP en plus par palier de combo
+  const RUN_TIMEOUT = 1500; // ms max pour exécuter le code du joueur
 
   let area, stages, idx, combo, gained, runCorrect, runBestCombo, worldId, onComplete;
 
@@ -85,7 +88,7 @@
   function showQcm(st) {
     area.innerHTML = header();
     const card = el('div', 'challenge-card');
-    card.innerHTML = `<div class="ch-tag">🎯 DÉFI</div>`;
+    card.innerHTML = `<div class="ch-tag">${st.review ? '🔁 RÉVISION' : '🎯 DÉFI'}</div>`;
     if (st.code) card.appendChild(codeBlock(st.code));
     card.appendChild(el('p', 'ch-question', st.question));
 
@@ -135,7 +138,6 @@
     const ta = el('textarea', 'editor');
     ta.value = st.starter || '';
     ta.spellcheck = false;
-    // Tab = 2 espaces, pour ne pas perdre le focus.
     ta.addEventListener('keydown', (e) => {
       if (e.key === 'Tab') {
         e.preventDefault();
@@ -149,62 +151,126 @@
     const out = el('div', 'editor-out');
     card.appendChild(out);
 
+    const actions = el('div', 'editor-actions');
     const run = el('button', 'btn', '▶ VÉRIFIER');
-    let solved = false;
+    actions.appendChild(run);
+
+    // Bouton "voir la solution" : caché tant qu'on n'a pas raté une fois.
+    const solBtn = el('button', 'btn btn--ghost', '💡 VOIR LA SOLUTION');
+    solBtn.style.display = 'none';
+    actions.appendChild(solBtn);
+    card.appendChild(actions);
+
+    let solved = false, failed = false;
+
+    solBtn.addEventListener('click', () => {
+      window.SFX.move();
+      if (st.solution) ta.value = st.solution;
+      const sol = el('div', 'solution-box');
+      sol.appendChild(el('div', 'sol-tag', '💡 SOLUTION'));
+      sol.appendChild(codeBlock(st.solution || '(non disponible)'));
+      sol.appendChild(el('p', 'sol-hint', 'La solution est recopiée dans l\'éditeur. Lis-la, puis clique sur VÉRIFIER.'));
+      solBtn.replaceWith(sol);
+    });
+
     run.addEventListener('click', () => {
       if (solved) return;
-      const res = runTests(ta.value, st.fnName, st.cases);
-      if (res.ok) {
-        solved = true;
-        out.className = 'editor-out ok';
-        out.textContent = `✅ ${res.passed}/${res.total} tests réussis !`;
-        win(st);
-      } else {
-        out.className = 'editor-out ko';
-        out.textContent = '❌ ' + res.message;
-        ta.classList.add('shake');
-        setTimeout(() => ta.classList.remove('shake'), 400);
-        breakCombo();
-        window.SFX.wrong();
-        S.recordAnswer(false);
-      }
+      run.disabled = true;
+      out.className = 'editor-out';
+      out.textContent = '⏳ exécution…';
+      runEditorTests(ta.value, st.fnName, st.cases).then((res) => {
+        run.disabled = false;
+        if (res.ok) {
+          solved = true;
+          out.className = 'editor-out ok';
+          out.textContent = `✅ ${res.passed}/${res.total} tests réussis !`;
+          win(st);
+        } else {
+          out.className = 'editor-out ko';
+          out.textContent = '❌ ' + res.message;
+          ta.classList.add('shake');
+          setTimeout(() => ta.classList.remove('shake'), 400);
+          breakCombo();
+          window.SFX.wrong();
+          S.recordAnswer(false);
+          if (!failed) { failed = true; if (st.solution) solBtn.style.display = ''; }
+        }
+      });
     });
-    card.appendChild(run);
+
     area.appendChild(card);
   }
 
-  // Exécute le code du joueur et passe les cas de test.
-  function runTests(userCode, fnName, cases) {
+  // ---------------------------------------------------------------
+  // Exécution sécurisée du code du joueur
+  // Worker isolé + chrono : une boucle infinie est coupée sans figer
+  // l'onglet. Repli sur exécution directe si les Workers sont indispo.
+  // ---------------------------------------------------------------
+  const WORKER_SRC = `
+    self.onmessage = function (e) {
+      var d = e.data, userCode = d.userCode, fnName = d.fnName, cases = d.cases;
+      function fmt(v){ if (typeof v === 'string') return '"' + v + '"'; if (v === undefined) return 'undefined'; return String(v); }
+      var fn;
+      try {
+        fn = (new Function(userCode + '\\n; return typeof ' + fnName + " === 'function' ? " + fnName + ' : undefined;'))();
+      } catch (err) { self.postMessage({ ok:false, message:'Erreur de syntaxe : ' + err.message }); return; }
+      if (typeof fn !== 'function') { self.postMessage({ ok:false, message:'Je ne trouve pas la fonction ' + fnName + '(...). Vérifie son nom.' }); return; }
+      var passed = 0;
+      for (var i = 0; i < cases.length; i++) {
+        var c = cases[i], got;
+        try { got = fn.apply(null, c.args); }
+        catch (err) { self.postMessage({ ok:false, message: fnName + '(' + c.args.join(', ') + ') a planté : ' + err.message }); return; }
+        var same = (got === c.expected) || (got !== got && c.expected !== c.expected);
+        if (!same) { self.postMessage({ ok:false, message: fnName + '(' + c.args.join(', ') + ') a renvoyé ' + fmt(got) + ' au lieu de ' + fmt(c.expected) }); return; }
+        passed++;
+      }
+      self.postMessage({ ok:true, passed: passed, total: cases.length });
+    };
+  `;
+
+  function runEditorTests(userCode, fnName, cases) {
+    return new Promise((resolve) => {
+      let worker, url;
+      try {
+        const blob = new Blob([WORKER_SRC], { type: 'application/javascript' });
+        url = URL.createObjectURL(blob);
+        worker = new Worker(url);
+      } catch (e) {
+        resolve(runTestsSync(userCode, fnName, cases)); // pas de worker → exécution directe
+        return;
+      }
+      const cleanup = () => { worker.terminate(); URL.revokeObjectURL(url); };
+      const timer = setTimeout(() => {
+        cleanup();
+        resolve({ ok: false, message: "⏱️ Ton code met trop de temps (boucle infinie ?). Vérifie la condition d'arrêt de ta boucle." });
+      }, RUN_TIMEOUT);
+      worker.onmessage = (ev) => { clearTimeout(timer); cleanup(); resolve(ev.data); };
+      worker.onerror = (ev) => { clearTimeout(timer); cleanup(); resolve({ ok: false, message: 'Erreur : ' + (ev.message || 'inconnue') }); };
+      worker.postMessage({ userCode, fnName, cases });
+    });
+  }
+
+  // Repli synchrone (si Worker indisponible). Aucune protection anti-boucle.
+  function runTestsSync(userCode, fnName, cases) {
     let fn;
     try {
-      const factory = new Function(
-        `${userCode}\n; return typeof ${fnName} === "function" ? ${fnName} : undefined;`
-      );
-      fn = factory();
-    } catch (e) {
-      return { ok: false, message: 'Erreur de syntaxe : ' + e.message };
-    }
-    if (typeof fn !== 'function') {
-      return { ok: false, message: `Je ne trouve pas la fonction ${fnName}(...). Vérifie son nom.` };
-    }
+      fn = (new Function(userCode + `\n; return typeof ${fnName} === "function" ? ${fnName} : undefined;`))();
+    } catch (e) { return { ok: false, message: 'Erreur de syntaxe : ' + e.message }; }
+    if (typeof fn !== 'function') return { ok: false, message: `Je ne trouve pas la fonction ${fnName}(...).` };
     let passed = 0;
     for (const c of cases) {
       let got;
       try { got = fn(...c.args); }
       catch (e) { return { ok: false, message: `${fnName}(${c.args.join(', ')}) a planté : ${e.message}` }; }
       if (!Object.is(got, c.expected)) {
-        return {
-          ok: false,
-          message: `${fnName}(${c.args.join(', ')}) a renvoyé ${format(got)} au lieu de ${format(c.expected)}.`,
-          passed, total: cases.length,
-        };
+        return { ok: false, message: `${fnName}(${c.args.join(', ')}) a renvoyé ${fmt(got)} au lieu de ${fmt(c.expected)}.` };
       }
       passed++;
     }
     return { ok: true, passed, total: cases.length };
   }
 
-  function format(v) {
+  function fmt(v) {
     if (typeof v === 'string') return `"${v}"`;
     if (v === undefined) return 'undefined';
     return String(v);
@@ -230,7 +296,6 @@
     window.SFX.correct();
     if (combo >= 2) window.SFX.combo(combo);
 
-    // Badges
     if (runCorrect === 1) S.awardBadge('first_step');
     if (combo >= 5 && S.awardBadge('combo_5')) window.CQ.toast('🏅 BADGE : COMBO x5 !');
     if (leveledUp) { window.SFX.levelup(); window.CQ.toast(`⬆️ NIVEAU ${S.level} !`); }

@@ -1,9 +1,11 @@
 /* =====================================================================
    CODEQUEST — Contenu du Monde JS / LOGIQUE
-   Chaque "stage" = une mini-leçon + un défi.
+   Chaque "stage" = une mini-leçon (optionnelle) + un défi.
    Types de défi :
      - 'qcm'    : on montre du code, tu prédis le résultat (choix multiple)
      - 'editor' : tu écris une fonction, on l'exécute et on la teste
+   Les stages marqués `review: true` re-testent d'anciens concepts
+   (répétition espacée, pour ne pas oublier).
    Enregistré dans window.CQContent.js
    ===================================================================== */
 (function () {
@@ -80,10 +82,22 @@
           { args: [0], expected: 0 },
           { args: [-4], expected: -8 },
         ],
+        solution: 'function double(n) {\n  return n * 2;\n}',
         explain: 'Il fallait renvoyer n * 2 : `return n * 2;`',
       },
 
-      // 5 — Booléens / comparaisons
+      // 5 — RÉVISION : variables + types
+      {
+        type: 'qcm',
+        review: true,
+        code: `let a = "2";\nlet b = 3;\nlet c = a + b;`,
+        question: 'Petit rappel : que vaut c ?',
+        options: ['5', '"23"', 'Erreur'],
+        answer: 1,
+        explain: 'a est un texte ("2"), donc a + b colle les deux → "23". (Souviens-toi du défi 2 !)',
+      },
+
+      // 6 — Booléens / comparaisons
       {
         type: 'qcm',
         lesson: {
@@ -99,7 +113,7 @@
         explain: '4 > 2 est vrai, mais 10 > 20 est faux. Avec &&, il suffit d\'un faux → false.',
       },
 
-      // 6 — Editor : estPair
+      // 7 — Editor : estPair
       {
         type: 'editor',
         lesson: {
@@ -117,10 +131,11 @@
           { args: [0], expected: true },
           { args: [99], expected: false },
         ],
+        solution: 'function estPair(n) {\n  return n % 2 === 0;\n}',
         explain: 'Il fallait renvoyer le test directement : `return n % 2 === 0;`',
       },
 
-      // 7 — Boucles for
+      // 8 — Boucles for
       {
         type: 'qcm',
         lesson: {
@@ -136,12 +151,23 @@
         explain: 'On ajoute 1, puis 2, puis 3 : 1 + 2 + 3 = 6.',
       },
 
-      // 8 — Editor : sommeJusqua
+      // 9 — RÉVISION : conditions + comparaisons
+      {
+        type: 'qcm',
+        review: true,
+        code: `let n = 7;\nlet type;\nif (n % 2 === 0) {\n  type = "pair";\n} else {\n  type = "impair";\n}`,
+        question: 'Rappel (conditions + modulo) : que vaut type ?',
+        options: ['"pair"', '"impair"', 'true'],
+        answer: 1,
+        explain: '7 % 2 vaut 1 (pas 0), donc la condition est fausse → on va dans le else → "impair".',
+      },
+
+      // 10 — Editor : sommeJusqua
       {
         type: 'editor',
         lesson: {
           title: 'Tout assembler',
-          body: `Dernier défi : combine une <b>boucle</b>, une <b>variable</b> et un <b>return</b>.
+          body: `Dernier vrai défi : combine une <b>boucle</b>, une <b>variable</b> et un <b>return</b>.
                  C'est exactement le genre de logique qu'on écrit côté serveur.`,
           example: `// addition de tous les nombres de 1 à n`,
         },
@@ -154,7 +180,24 @@
           { args: [1], expected: 1 },
           { args: [10], expected: 55 },
         ],
+        solution: 'function sommeJusqua(n) {\n  let total = 0;\n  for (let i = 1; i <= n; i++) {\n    total += i;\n  }\n  return total;\n}',
         explain: 'Une boucle de 1 à n qui ajoute i à total : `for (let i = 1; i <= n; i++) total += i;`',
+      },
+
+      // 11 — RÉVISION FINALE : variables + boucle + condition
+      {
+        type: 'qcm',
+        review: true,
+        lesson: {
+          title: '🔁 Révision finale',
+          body: `Pour finir, un code qui mélange <b>tout</b> ce que tu as vu :
+                 variable, boucle et condition. Lis-le tranquillement.`,
+        },
+        code: `let compte = 0;\nfor (let i = 1; i <= 5; i++) {\n  if (i % 2 === 0) {\n    compte = compte + 1;\n  }\n}`,
+        question: 'Combien vaut compte ? (indice : on compte les nombres pairs de 1 à 5)',
+        options: ['1', '2', '5'],
+        answer: 1,
+        explain: 'Entre 1 et 5, les pairs sont 2 et 4 → la condition est vraie 2 fois → compte = 2.',
       },
 
     ],
