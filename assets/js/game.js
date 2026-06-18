@@ -7,14 +7,26 @@
   const S = window.GameState;
 
   // --- Définition des mondes ---
+  // `requires` = monde prérequis. Le verrou ne s'applique QUE si ce prérequis
+  // a déjà du contenu jouable (sinon on ne pourrait jamais le débloquer).
   const WORLDS = [
     { id: 'html', icon: '🧱', name: 'HTML', accent: '#ff7a45',
-      desc: 'Construis la structure des pages, balise par balise.', unlock: () => true },
+      desc: 'Construis la structure des pages, balise par balise.', requires: null },
     { id: 'css',  icon: '🎨', name: 'CSS',  accent: '#45a6ff',
-      desc: 'Donne style et couleurs. Le monde du peintre rétro.', unlock: () => S.get().worlds.html >= 0.5 },
+      desc: 'Donne style et couleurs. Le monde du peintre rétro.', requires: 'html' },
     { id: 'js',   icon: '🧠', name: 'JS / LOGIQUE', accent: '#ffe600',
-      desc: 'Le cerveau du code. QCM + mini-éditeur. Proche du backend.', unlock: () => S.get().worlds.css >= 0.5 },
+      desc: 'Le cerveau du code. QCM + mini-éditeur. Proche du backend.', requires: 'css' },
   ];
+
+  function hasContent(id) {
+    return !!(window.CQContent && window.CQContent[id] &&
+              window.CQContent[id].stages && window.CQContent[id].stages.length);
+  }
+  function isUnlocked(w) {
+    if (!w.requires) return true;
+    if (!hasContent(w.requires)) return true;       // prérequis pas encore jouable → on n'enferme pas
+    return (S.get().worlds[w.requires] || 0) >= 0.5;
+  }
 
   const BADGES = [
     { id: 'first_step', icon: '👣', label: 'Premier pas' },
@@ -89,7 +101,7 @@
     const list = document.getElementById('worlds-list');
     list.innerHTML = '';
     WORLDS.forEach(w => {
-      const unlocked = w.unlock();
+      const unlocked = isUnlocked(w);
       const prog = Math.round((S.get().worlds[w.id] || 0) * 100);
       const card = document.createElement('div');
       card.className = 'world-card' + (unlocked ? '' : ' locked');
