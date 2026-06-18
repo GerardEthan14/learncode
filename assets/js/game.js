@@ -119,6 +119,19 @@
     document.getElementById('play-hud').innerHTML = `NIV <b>${S.level}</b>`;
     document.querySelector('#screen-play').style.setProperty('--accent', w.accent);
     show('play');
+
+    const area = document.getElementById('play-area');
+    const hasContent = window.CQContent && window.CQContent[w.id] && window.CQContent[w.id].stages.length;
+    if (hasContent) {
+      // Quand le monde est terminé/quitté, on revient à la sélection des mondes.
+      window.CQEngine.start(w.id, area, () => show('worlds'));
+    } else {
+      area.innerHTML = `
+        <div class="coming-soon">
+          <p class="big">🚧 BIENTÔT 🚧</p>
+          <p>Le contenu de ce monde arrive au prochain livrable.</p>
+        </div>`;
+    }
   }
 
   // ---------------------------------------------------------------

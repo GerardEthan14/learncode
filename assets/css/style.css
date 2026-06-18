@@ -186,6 +186,71 @@ body {
 .coming-soon .big { font-family: var(--font-title); font-size: 24px; color: var(--neon-3); margin-bottom: 18px; }
 .coming-soon .hint { margin-top: 14px; font-size: 18px; opacity: 0.7; }
 
+/* ---------- Zone de jeu : déroulé d'un monde ---------- */
+.play-area { flex: 1; display: block; max-width: 760px; margin: 0 auto; width: 100%; }
+
+.run-top { margin-bottom: 22px; }
+.run-prog { height: 14px; background: #000; border: 2px solid var(--accent, var(--neon)); }
+.run-prog > i { display: block; height: 100%; background: var(--accent, var(--neon)); width: 0; transition: width 0.4s; }
+.run-meta { display: flex; justify-content: space-between; margin-top: 8px; font-size: 18px; color: var(--dim); }
+.run-meta .combo { color: var(--dim); }
+.run-meta .combo.hot { color: var(--neon-2); text-shadow: 0 0 8px var(--neon-2); animation: pulse 0.6s infinite alternate; }
+@keyframes pulse { from { transform: scale(1); } to { transform: scale(1.12); } }
+
+.lesson-card, .challenge-card, .feedback {
+  background: var(--bg-2); border: 3px solid var(--accent, var(--neon));
+  padding: 24px; box-shadow: 5px 5px 0 rgba(0,0,0,0.6); margin-bottom: 18px;
+}
+.lesson-tag, .ch-tag { font-family: var(--font-title); font-size: 11px; color: var(--accent, var(--neon)); margin-bottom: 14px; }
+.lesson-title { font-family: var(--font-title); font-size: 16px; color: var(--ink); margin-bottom: 14px; }
+.lesson-body { font-size: 21px; margin-bottom: 16px; }
+.lesson-card .btn, .challenge-card .btn { margin-top: 18px; }
+
+.code-block {
+  font-family: 'VT323', monospace; font-size: 21px; line-height: 1.45;
+  background: #05040d; color: var(--neon); border-left: 4px solid var(--accent, var(--neon));
+  padding: 16px 18px; margin: 6px 0 16px; white-space: pre-wrap; overflow-x: auto;
+}
+code { font-family: 'VT323', monospace; color: var(--neon-3); background: rgba(0,0,0,0.4); padding: 1px 6px; }
+
+.ch-question { font-size: 23px; margin: 8px 0 18px; }
+
+.options { display: grid; gap: 12px; }
+.option {
+  font-family: 'VT323', monospace; font-size: 22px; text-align: left; cursor: pointer;
+  background: #05040d; color: var(--ink); border: 2px solid var(--dim); padding: 14px 18px;
+  transition: background 0.12s, border-color 0.12s, transform 0.08s;
+}
+.option:hover:not(:disabled) { border-color: var(--accent, var(--neon)); background: #0c0a1f; }
+.option:disabled { cursor: default; }
+.option.good { border-color: var(--ok); color: var(--ok); background: rgba(56,255,155,0.12); }
+.option.bad  { border-color: var(--ko); color: var(--ko); background: rgba(255,77,109,0.12); }
+
+.editor {
+  width: 100%; min-height: 170px; resize: vertical;
+  font-family: 'VT323', monospace; font-size: 21px; line-height: 1.4;
+  background: #05040d; color: var(--neon); border: 2px solid var(--accent, var(--neon));
+  padding: 14px; margin-bottom: 14px;
+}
+.editor:focus { outline: none; box-shadow: 0 0 12px var(--accent, var(--neon)); }
+.editor-out { font-size: 20px; min-height: 26px; margin-bottom: 8px; }
+.editor-out.ok { color: var(--ok); }
+.editor-out.ko { color: var(--ko); }
+
+.feedback { border-color: var(--ok); }
+.fb-head { font-family: var(--font-title); font-size: 15px; color: var(--ok); margin-bottom: 12px; }
+.fb-xp { color: var(--neon-3); }
+.fb-explain { font-size: 21px; color: var(--ink); }
+
+.shake { animation: shake 0.4s; }
+@keyframes shake { 0%,100%{transform:translateX(0);} 20%{transform:translateX(-8px);} 40%{transform:translateX(8px);} 60%{transform:translateX(-5px);} 80%{transform:translateX(5px);} }
+
+.summary { text-align: center; background: var(--bg-2); border: 3px solid var(--accent, var(--neon)); padding: 30px; box-shadow: 5px 5px 0 rgba(0,0,0,0.6); }
+.summary-title { font-family: var(--font-title); font-size: 20px; color: var(--neon-3); margin-bottom: 14px; }
+.summary-icon { font-size: 64px; margin-bottom: 20px; }
+.summary .stat-grid { margin-bottom: 24px; }
+.summary-actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+
 /* ---------- Stats ---------- */
 .stats { max-width: 760px; margin: 0 auto; width: 100%; display: grid; gap: 18px; }
 .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; }
