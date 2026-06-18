@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CODEQUEST — Apprends le code en jouant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+  <!-- Fond animé : champ d'étoiles + grille rétro -->
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="bg-stars" id="stars" aria-hidden="true"></div>
+
+  <!-- Effet CRT (scanlines + vignette) appliqué par-dessus tout -->
+  <div class="crt-overlay" aria-hidden="true"></div>
+  <div class="crt-flicker" aria-hidden="true"></div>
+
+  <main class="screen-wrap">
+
+    <!-- ============ ÉCRAN : ACCUEIL ============ -->
+    <section class="screen screen--active" id="screen-home" data-screen="home">
+      <div class="home">
+        <h1 class="logo glitch" data-text="CODEQUEST">CODEQUEST</h1>
+        <p class="tagline">// apprends le code comme un jeu rétro</p>
+
+        <div class="home-menu">
+          <button class="btn btn--big" data-action="goto" data-target="worlds">▶ JOUER</button>
+          <button class="btn" data-action="goto" data-target="stats">📊 MES STATS</button>
+          <button class="btn" data-action="goto" data-target="about">❓ C'EST QUOI ?</button>
+        </div>
+
+        <p class="press-start blink">- appuie sur un bouton pour commencer -</p>
+      </div>
+    </section>
+
+    <!-- ============ ÉCRAN : CHOIX DES MONDES ============ -->
+    <section class="screen" id="screen-worlds" data-screen="worlds">
+      <header class="topbar">
+        <button class="btn btn--ghost" data-action="goto" data-target="home">‹ RETOUR</button>
+        <h2 class="screen-title">CHOISIS TON MONDE</h2>
+        <div class="hud-mini" id="hud-mini"></div>
+      </header>
+
+      <div class="worlds" id="worlds-list">
+        <!-- injecté par game.js -->
+      </div>
+    </section>
+
+    <!-- ============ ÉCRAN : JEU (placeholder pour la suite) ============ -->
+    <section class="screen" id="screen-play" data-screen="play">
+      <header class="topbar">
+        <button class="btn btn--ghost" data-action="goto" data-target="worlds">‹ MONDES</button>
+        <h2 class="screen-title" id="play-title">MONDE</h2>
+        <div class="hud-mini" id="play-hud"></div>
+      </header>
+      <div class="play-area" id="play-area">
+        <div class="coming-soon">
+          <p class="big">🚧 BIENTÔT 🚧</p>
+          <p>Le contenu de ce monde arrive au prochain livrable.</p>
+          <p class="hint">(Ici on branchera les QCM et le mini-éditeur de code.)</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ ÉCRAN : STATS ============ -->
+    <section class="screen" id="screen-stats" data-screen="stats">
+      <header class="topbar">
+        <button class="btn btn--ghost" data-action="goto" data-target="home">‹ RETOUR</button>
+        <h2 class="screen-title">MES STATISTIQUES</h2>
+        <div></div>
+      </header>
+      <div class="stats" id="stats-panel">
+        <!-- injecté par game.js -->
+      </div>
+    </section>
+
+    <!-- ============ ÉCRAN : À PROPOS ============ -->
+    <section class="screen" id="screen-about" data-screen="about">
+      <header class="topbar">
+        <button class="btn btn--ghost" data-action="goto" data-target="home">‹ RETOUR</button>
+        <h2 class="screen-title">C'EST QUOI ?</h2>
+        <div></div>
+      </header>
+      <div class="about">
+        <p>CODEQUEST t'apprend les <b>bases du dev web</b> sous forme de jeu rétro.</p>
+        <ul>
+          <li><span class="tag tag--html">HTML</span> — la structure des pages</li>
+          <li><span class="tag tag--css">CSS</span> — le style et les couleurs</li>
+          <li><span class="tag tag--js">JS / LOGIQUE</span> — le cerveau, proche du <b>backend</b></li>
+        </ul>
+        <p>Gagne de l'<b>XP</b>, enchaîne les <b>combos</b>, débloque des <b>niveaux</b> et
+           garde un œil sur tes <b>stats</b>. Ta progression est sauvegardée sur ton navigateur.</p>
+        <p class="hint">Objectif : voir si le code te plaît avant tes cours du soir 😉</p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Bouton son global -->
+  <button class="sound-toggle" id="sound-toggle" title="Activer / couper le son">🔊</button>
+
+  <script src="assets/js/audio.js"></script>
+  <script src="assets/js/state.js"></script>
+  <script src="assets/js/game.js"></script>
+</body>
+</html>

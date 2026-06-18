@@ -1,0 +1,209 @@
+/* =====================================================================
+   CODEQUEST — Thème rétro arcade
+   Palette : néon sur fond sombre, scanlines CRT, police bitmap.
+   ===================================================================== */
+
+:root {
+  --bg:        #0b0a1a;
+  --bg-2:      #14122b;
+  --ink:       #e8e6ff;
+  --dim:       #8b86c9;
+  --neon:      #00ffd5;   /* cyan principal */
+  --neon-2:    #ff2e88;   /* magenta */
+  --neon-3:    #ffe600;   /* jaune */
+  --html:      #ff7a45;
+  --css:       #45a6ff;
+  --js:        #ffe600;
+  --ok:        #38ff9b;
+  --ko:        #ff4d6d;
+  --line:      rgba(0, 255, 213, 0.25);
+
+  --font-title: 'Press Start 2P', monospace;
+  --font-body:  'VT323', 'Courier New', monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body { height: 100%; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--ink);
+  overflow: hidden;
+  position: relative;
+  font-size: 22px;
+  line-height: 1.4;
+  letter-spacing: 0.5px;
+}
+
+/* ---------- Fonds animés ---------- */
+.bg-grid {
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    linear-gradient(transparent 95%, var(--line) 95%) 0 0 / 100% 36px,
+    linear-gradient(90deg, transparent 95%, var(--line) 95%) 0 0 / 36px 100%,
+    radial-gradient(circle at 50% 120%, var(--bg-2), var(--bg) 70%);
+  transform: perspective(400px) rotateX(45deg) translateY(20%) scale(2);
+  transform-origin: center bottom;
+  animation: grid-scroll 6s linear infinite;
+  opacity: 0.5;
+}
+@keyframes grid-scroll { from { background-position-y: 0, 0, 0; } to { background-position-y: 36px, 0, 0; } }
+
+.bg-stars { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+.bg-stars i {
+  position: absolute; width: 2px; height: 2px; background: #fff; border-radius: 50%;
+  opacity: 0.7; animation: twinkle 3s ease-in-out infinite;
+}
+@keyframes twinkle { 0%,100% { opacity: 0.15; } 50% { opacity: 0.9; } }
+
+/* ---------- Effet CRT ---------- */
+.crt-overlay {
+  position: fixed; inset: 0; z-index: 50; pointer-events: none;
+  background:
+    repeating-linear-gradient(0deg, rgba(0,0,0,0.18) 0px, rgba(0,0,0,0.18) 1px, transparent 1px, transparent 3px),
+    radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.55) 100%);
+}
+.crt-flicker {
+  position: fixed; inset: 0; z-index: 51; pointer-events: none;
+  background: rgba(18, 16, 40, 0.06);
+  animation: flicker 0.15s infinite;
+}
+@keyframes flicker { 0%{opacity:0.10;} 50%{opacity:0.04;} 100%{opacity:0.08;} }
+
+@media (prefers-reduced-motion: reduce) {
+  .bg-grid, .crt-flicker, .bg-stars i, .blink, .glitch::before, .glitch::after { animation: none !important; }
+}
+
+/* ---------- Écrans ---------- */
+.screen-wrap { position: relative; z-index: 10; height: 100vh; }
+.screen {
+  position: absolute; inset: 0;
+  display: none; flex-direction: column;
+  padding: 28px clamp(16px, 5vw, 64px);
+  overflow-y: auto;
+}
+.screen--active { display: flex; animation: screen-in 0.35s ease; }
+@keyframes screen-in { from { opacity: 0; transform: translateY(10px) scale(0.99); } to { opacity: 1; transform: none; } }
+
+/* ---------- Accueil ---------- */
+.home { margin: auto; text-align: center; max-width: 720px; }
+.logo {
+  font-family: var(--font-title);
+  font-size: clamp(28px, 7vw, 64px);
+  color: var(--neon);
+  text-shadow: 0 0 8px var(--neon), 4px 4px 0 var(--neon-2);
+  margin-bottom: 18px;
+}
+.tagline { color: var(--neon-3); font-size: 24px; margin-bottom: 40px; }
+.home-menu { display: flex; flex-direction: column; gap: 16px; max-width: 420px; margin: 0 auto 36px; }
+.press-start { color: var(--dim); font-size: 22px; }
+.blink { animation: blink 1.1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+
+/* Glitch sur le titre */
+.glitch { position: relative; }
+.glitch::before, .glitch::after {
+  content: attr(data-text); position: absolute; inset: 0;
+  clip-path: inset(0 0 0 0);
+}
+.glitch::before { color: var(--neon-2); transform: translate(-2px, 0); animation: glitch-a 2.6s infinite linear alternate-reverse; }
+.glitch::after  { color: var(--css);   transform: translate(2px, 0);  animation: glitch-b 2s infinite linear alternate-reverse; }
+@keyframes glitch-a { 0%,92%{clip-path: inset(0 0 100% 0);} 93%{clip-path: inset(20% 0 50% 0);} 96%{clip-path: inset(60% 0 10% 0);} 100%{clip-path: inset(0 0 100% 0);} }
+@keyframes glitch-b { 0%,90%{clip-path: inset(100% 0 0 0);} 91%{clip-path: inset(40% 0 30% 0);} 95%{clip-path: inset(10% 0 70% 0);} 100%{clip-path: inset(100% 0 0 0);} }
+
+/* ---------- Boutons ---------- */
+.btn {
+  font-family: var(--font-title);
+  font-size: 14px;
+  color: var(--ink);
+  background: var(--bg-2);
+  border: 3px solid var(--neon);
+  padding: 16px 20px;
+  cursor: pointer;
+  box-shadow: 4px 4px 0 rgba(0,0,0,0.6), inset 0 0 12px rgba(0,255,213,0.15);
+  transition: transform 0.08s, box-shadow 0.08s, background 0.15s;
+  text-align: center;
+}
+.btn:hover { background: var(--neon); color: var(--bg); box-shadow: 0 0 18px var(--neon); }
+.btn:active { transform: translate(4px, 4px); box-shadow: 0 0 0 rgba(0,0,0,0); }
+.btn--big { font-size: 20px; padding: 22px; border-color: var(--neon-3); }
+.btn--big:hover { background: var(--neon-3); box-shadow: 0 0 18px var(--neon-3); }
+.btn--ghost { border-color: var(--dim); box-shadow: none; font-size: 11px; padding: 10px 14px; }
+.btn--ghost:hover { background: var(--dim); box-shadow: none; }
+
+/* ---------- Barre du haut ---------- */
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 28px; }
+.screen-title { font-family: var(--font-title); font-size: clamp(14px, 3vw, 24px); color: var(--neon); text-shadow: 2px 2px 0 var(--neon-2); }
+.hud-mini { font-size: 20px; color: var(--neon-3); text-align: right; min-width: 120px; }
+.hud-mini b { color: var(--neon); }
+
+/* ---------- Cartes des mondes ---------- */
+.worlds { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; max-width: 980px; margin: 0 auto; width: 100%; }
+.world-card {
+  background: var(--bg-2);
+  border: 3px solid var(--accent, var(--neon));
+  padding: 22px; cursor: pointer; position: relative; overflow: hidden;
+  box-shadow: 5px 5px 0 rgba(0,0,0,0.6);
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+.world-card:hover { transform: translateY(-4px); box-shadow: 0 10px 0 rgba(0,0,0,0.5), 0 0 22px var(--accent); }
+.world-card.locked { opacity: 0.45; cursor: not-allowed; filter: grayscale(0.6); }
+.world-card .wc-icon { font-size: 44px; }
+.world-card .wc-name { font-family: var(--font-title); font-size: 15px; color: var(--accent); margin: 12px 0 8px; }
+.world-card .wc-desc { color: var(--dim); font-size: 19px; }
+.world-card .wc-foot { margin-top: 14px; display: flex; justify-content: space-between; align-items: center; font-size: 18px; }
+.world-card .wc-lock { position: absolute; top: 12px; right: 14px; font-size: 22px; }
+.wc-bar { height: 10px; background: #000; border: 2px solid var(--accent); margin-top: 10px; }
+.wc-bar > i { display: block; height: 100%; background: var(--accent); width: 0; transition: width 0.4s; }
+
+/* ---------- Zone de jeu (placeholder) ---------- */
+.play-area { flex: 1; display: flex; align-items: center; justify-content: center; }
+.coming-soon { text-align: center; color: var(--dim); }
+.coming-soon .big { font-family: var(--font-title); font-size: 24px; color: var(--neon-3); margin-bottom: 18px; }
+.coming-soon .hint { margin-top: 14px; font-size: 18px; opacity: 0.7; }
+
+/* ---------- Stats ---------- */
+.stats { max-width: 760px; margin: 0 auto; width: 100%; display: grid; gap: 18px; }
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; }
+.stat-box { background: var(--bg-2); border: 3px solid var(--neon); padding: 18px; text-align: center; box-shadow: 4px 4px 0 rgba(0,0,0,0.6); }
+.stat-box .num { font-family: var(--font-title); font-size: 22px; color: var(--neon-3); }
+.stat-box .lbl { color: var(--dim); font-size: 18px; margin-top: 8px; text-transform: uppercase; }
+.xp-wrap { background: var(--bg-2); border: 3px solid var(--neon); padding: 18px; box-shadow: 4px 4px 0 rgba(0,0,0,0.6); }
+.xp-head { display: flex; justify-content: space-between; font-family: var(--font-title); font-size: 13px; margin-bottom: 12px; }
+.xp-bar { height: 22px; background: #000; border: 2px solid var(--neon-3); }
+.xp-bar > i { display: block; height: 100%; background: linear-gradient(90deg, var(--neon), var(--neon-3)); width: 0; transition: width 0.6s; }
+.badges { display: flex; flex-wrap: wrap; gap: 12px; }
+.badge { background: var(--bg-2); border: 2px dashed var(--dim); padding: 10px 14px; font-size: 18px; color: var(--dim); }
+.badge.earned { border-style: solid; border-color: var(--neon-3); color: var(--neon-3); }
+.reset-btn { font-family: var(--font-title); font-size: 11px; color: var(--ko); background: transparent; border: 2px solid var(--ko); padding: 10px; cursor: pointer; justify-self: center; }
+.reset-btn:hover { background: var(--ko); color: var(--bg); }
+
+/* ---------- À propos ---------- */
+.about { max-width: 680px; margin: 0 auto; width: 100%; font-size: 22px; }
+.about p { margin-bottom: 18px; }
+.about ul { list-style: none; margin: 18px 0; display: grid; gap: 12px; }
+.about li { background: var(--bg-2); border-left: 4px solid var(--neon); padding: 12px 16px; }
+.about .hint { color: var(--neon-3); }
+.tag { font-family: var(--font-title); font-size: 12px; padding: 4px 8px; }
+.tag--html { color: var(--html); } .tag--css { color: var(--css); } .tag--js { color: var(--js); }
+
+/* ---------- Bouton son ---------- */
+.sound-toggle {
+  position: fixed; bottom: 18px; right: 18px; z-index: 60;
+  width: 52px; height: 52px; font-size: 24px; cursor: pointer;
+  background: var(--bg-2); border: 3px solid var(--neon); border-radius: 50%;
+  box-shadow: 0 0 12px rgba(0,255,213,0.4);
+}
+.sound-toggle:hover { background: var(--neon); }
+.sound-toggle.muted { border-color: var(--ko); box-shadow: none; opacity: 0.6; }
+
+/* ---------- Toast XP / level up (pour plus tard) ---------- */
+.toast {
+  position: fixed; top: 24px; left: 50%; transform: translateX(-50%) translateY(-120%);
+  z-index: 70; background: var(--bg-2); border: 3px solid var(--neon-3); color: var(--neon-3);
+  font-family: var(--font-title); font-size: 13px; padding: 14px 22px; box-shadow: 0 0 20px var(--neon-3);
+  transition: transform 0.4s cubic-bezier(.2,1.4,.4,1);
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
