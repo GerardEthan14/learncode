@@ -113,6 +113,28 @@ body {
 @keyframes glitch-a { 0%,92%{clip-path: inset(0 0 100% 0);} 93%{clip-path: inset(20% 0 50% 0);} 96%{clip-path: inset(60% 0 10% 0);} 100%{clip-path: inset(0 0 100% 0);} }
 @keyframes glitch-b { 0%,90%{clip-path: inset(100% 0 0 0);} 91%{clip-path: inset(40% 0 30% 0);} 95%{clip-path: inset(10% 0 70% 0);} 100%{clip-path: inset(100% 0 0 0);} }
 
+/* ---------- Écran profil ---------- */
+.profile-form { display: flex; flex-direction: column; gap: 16px; max-width: 420px; margin: 0 auto 28px; }
+.profile-input {
+  font-family: var(--font-title); font-size: 16px; text-align: center;
+  color: var(--neon-3); background: #000; border: 3px solid var(--neon-3);
+  padding: 18px 14px; text-transform: uppercase; letter-spacing: 2px;
+  box-shadow: inset 0 0 12px rgba(255,230,0,0.15);
+}
+.profile-input:focus { outline: none; box-shadow: 0 0 16px var(--neon-3), inset 0 0 12px rgba(255,230,0,0.25); }
+.profile-input::placeholder { color: var(--dim); }
+.profile-list { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; max-width: 520px; margin: 0 auto 30px; }
+.profile-chip {
+  font-family: var(--font-body); font-size: 19px; cursor: pointer;
+  background: var(--bg-2); border: 2px solid var(--neon); color: var(--ink);
+  padding: 8px 14px; display: flex; align-items: center; gap: 10px;
+}
+.profile-chip:hover { background: var(--neon); color: var(--bg); }
+.profile-chip .lvl { color: var(--neon-3); font-size: 16px; }
+.profile-chip:hover .lvl { color: var(--bg); }
+.profile-chip .del { color: var(--ko); font-weight: bold; padding: 0 2px; }
+.profile-chip .del:hover { color: #fff; }
+
 /* ---------- Boutons ---------- */
 .btn {
   font-family: var(--font-title);

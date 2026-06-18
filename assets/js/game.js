@@ -1,5 +1,5 @@
 /* =====================================================================
-   CODEQUEST — Logique principale : navigation entre écrans + rendu HUD.
+   CODEQUEST — Logique principale : profils, navigation, HUD, stats.
    Le contenu des mondes (QCM + mini-éditeur) sera branché au prochain
    livrable via la fonction startWorld().
    ===================================================================== */
@@ -31,9 +31,53 @@
     document.querySelectorAll('.screen').forEach(s => {
       s.classList.toggle('screen--active', s.dataset.screen === name);
     });
+    if (name === 'profile') renderProfiles();
+    if (name === 'home')   renderHome();
     if (name === 'worlds') renderWorlds();
     if (name === 'stats')  renderStats();
     window.scrollTo(0, 0);
+  }
+
+  // ---------------------------------------------------------------
+  // Écran : profil / connexion
+  // ---------------------------------------------------------------
+  function renderProfiles() {
+    const box = document.getElementById('profile-list');
+    const profiles = S.listProfiles();
+    box.innerHTML = '';
+    profiles.forEach(name => {
+      // Lit le niveau du profil sans s'y connecter (lecture brute du save).
+      const chip = document.createElement('div');
+      chip.className = 'profile-chip';
+      chip.innerHTML = `<span class="pick">👤 ${escapeHtml(name)}</span>
+                        <span class="del" title="Supprimer ce profil">✕</span>`;
+      chip.querySelector('.pick').addEventListener('click', () => {
+        window.SFX.start();
+        S.login(name);
+        show('home');
+      });
+      chip.querySelector('.del').addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (confirm(`Supprimer le profil "${name}" et toutes ses stats ?`)) {
+          window.SFX.back();
+          S.deleteProfile(name);
+          renderProfiles();
+        }
+      });
+      box.appendChild(chip);
+    });
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+  }
+
+  // ---------------------------------------------------------------
+  // Écran : accueil
+  // ---------------------------------------------------------------
+  function renderHome() {
+    const el = document.getElementById('home-profile');
+    if (el) el.textContent = S.current() || 'joueur';
   }
 
   // ---------------------------------------------------------------
@@ -64,12 +108,10 @@
       list.appendChild(card);
     });
 
-    // HUD mini
     document.getElementById('hud-mini').innerHTML =
-      `NIV <b>${S.level}</b> · XP <b>${S.xpInLevel}/${S.xpForLevel}</b>`;
+      `👤 <b>${escapeHtml(S.current() || '')}</b> · NIV <b>${S.level}</b> · XP <b>${S.xpInLevel}/${S.xpForLevel}</b>`;
   }
 
-  // Lance un monde (placeholder pour l'instant).
   function startWorld(w) {
     document.getElementById('play-title').textContent = `${w.icon} ${w.name}`;
     document.getElementById('play-hud').innerHTML = `NIV <b>${S.level}</b>`;
@@ -92,7 +134,7 @@
 
     panel.innerHTML = `
       <div class="xp-wrap">
-        <div class="xp-head"><span>NIVEAU ${S.level}</span><span>${S.xpInLevel} / ${S.xpForLevel} XP</span></div>
+        <div class="xp-head"><span>👤 ${escapeHtml(S.current() || '')} · NIVEAU ${S.level}</span><span>${S.xpInLevel} / ${S.xpForLevel} XP</span></div>
         <div class="xp-bar"><i style="width:${(S.xpInLevel / S.xpForLevel) * 100}%"></i></div>
       </div>
       <div class="stat-grid">
@@ -104,11 +146,11 @@
       </div>
       <h3 class="screen-title" style="font-size:14px;margin-top:8px;">BADGES</h3>
       <div class="badges">${badgeHtml}</div>
-      <button class="reset-btn" id="reset-btn">⟲ REMETTRE À ZÉRO</button>
+      <button class="reset-btn" id="reset-btn">⟲ REMETTRE CE PROFIL À ZÉRO</button>
     `;
 
     document.getElementById('reset-btn').addEventListener('click', () => {
-      if (confirm('Effacer toute ta progression ?')) {
+      if (confirm('Effacer la progression de ce profil ?')) {
         window.SFX.back();
         S.reset();
         renderStats();
@@ -127,7 +169,7 @@
     requestAnimationFrame(() => t.classList.add('show'));
     setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 1800);
   }
-  window.CQ = { toast, show }; // utile pour les futurs modules
+  window.CQ = { toast, show };
 
   // ---------------------------------------------------------------
   // Câblage des événements
@@ -138,6 +180,27 @@
     const target = btn.dataset.target;
     window.SFX[target === 'home' ? 'back' : 'move']();
     show(target);
+  });
+
+  // Formulaire de connexion profil
+  document.getElementById('profile-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const input = document.getElementById('profile-input');
+    if (S.login(input.value)) {
+      window.SFX.start();
+      input.value = '';
+      show('home');
+    } else {
+      window.SFX.wrong();
+      input.focus();
+    }
+  });
+
+  // Changer de profil
+  document.getElementById('switch-profile').addEventListener('click', () => {
+    window.SFX.back();
+    S.logout();
+    show('profile');
   });
 
   // Bouton son
@@ -166,8 +229,21 @@
     }
   })();
 
-  // Compte le temps de jeu
-  setInterval(() => { S.get().playedSeconds++; }, 1000);
+  // Compte le temps de jeu (sauvé toutes les 15 s pour limiter les écritures)
+  let tick = 0;
+  setInterval(() => {
+    if (!S.current()) return;
+    S.tickTime();
+    if (++tick % 15 === 0) S.flush();
+  }, 1000);
+  window.addEventListener('beforeunload', () => S.flush());
 
-  show('home');
+  // ---------------------------------------------------------------
+  // Démarrage : reprend le dernier profil, sinon écran de connexion
+  // ---------------------------------------------------------------
+  if (S.resume()) {
+    show('home');
+  } else {
+    show('profile');
+  }
 })();

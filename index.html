@@ -20,16 +20,34 @@
 
   <main class="screen-wrap">
 
-    <!-- ============ ÉCRAN : ACCUEIL ============ -->
-    <section class="screen screen--active" id="screen-home" data-screen="home">
+    <!-- ============ ÉCRAN : PROFIL / CONNEXION ============ -->
+    <section class="screen screen--active" id="screen-profile" data-screen="profile">
       <div class="home">
         <h1 class="logo glitch" data-text="CODEQUEST">CODEQUEST</h1>
-        <p class="tagline">// apprends le code comme un jeu rétro</p>
+        <p class="tagline">// qui joue ?</p>
+
+        <form class="profile-form" id="profile-form" autocomplete="off">
+          <input type="text" id="profile-input" class="profile-input"
+                 maxlength="14" placeholder="TON NOM DE PROFIL" />
+          <button type="submit" class="btn btn--big">▶ ENTRER</button>
+        </form>
+
+        <div class="profile-list" id="profile-list"></div>
+        <p class="press-start">- tes stats sont sauvées par profil -</p>
+      </div>
+    </section>
+
+    <!-- ============ ÉCRAN : ACCUEIL ============ -->
+    <section class="screen" id="screen-home" data-screen="home">
+      <div class="home">
+        <h1 class="logo glitch" data-text="CODEQUEST">CODEQUEST</h1>
+        <p class="tagline">// salut <span id="home-profile">joueur</span> !</p>
 
         <div class="home-menu">
           <button class="btn btn--big" data-action="goto" data-target="worlds">▶ JOUER</button>
           <button class="btn" data-action="goto" data-target="stats">📊 MES STATS</button>
           <button class="btn" data-action="goto" data-target="about">❓ C'EST QUOI ?</button>
+          <button class="btn btn--ghost" id="switch-profile">↺ CHANGER DE PROFIL</button>
         </div>
 
         <p class="press-start blink">- appuie sur un bouton pour commencer -</p>
