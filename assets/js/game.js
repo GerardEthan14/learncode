@@ -28,6 +28,8 @@
   // Navigation entre écrans
   // ---------------------------------------------------------------
   function show(name) {
+    // Tous les écrans sauf "profile" exigent un profil connecté.
+    if (name !== 'profile' && !S.current()) name = 'profile';
     document.querySelectorAll('.screen').forEach(s => {
       s.classList.toggle('screen--active', s.dataset.screen === name);
     });
