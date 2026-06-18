@@ -1,17 +1,18 @@
 /* =====================================================================
    CODEQUEST — Moteur de monde (générique)
-   Déroule les "stages" d'un monde : mini-leçon → défi → feedback → bilan.
-   Gère le score, les combos, l'XP, les montées de niveau et les badges.
-   Le code du mini-éditeur est exécuté dans un Worker isolé avec chrono de
+   Déroule les "stages" d'un monde : chapitre / mini-leçon → défi →
+   feedback → bilan. Gère score, combos, XP, montées de niveau, badges.
+   Le code du mini-éditeur tourne dans un Worker isolé avec chrono de
    sécurité (anti boucle infinie).
+   Types de stage : 'chapter' (séparateur), 'qcm', 'editor'.
    Exposé via window.CQEngine.start(worldId, areaEl, onComplete).
    ===================================================================== */
 (function () {
   const S = window.GameState;
 
-  const BASE_XP = 10;       // XP de base par bonne réponse
-  const COMBO_BONUS = 5;    // XP en plus par palier de combo
-  const RUN_TIMEOUT = 1500; // ms max pour exécuter le code du joueur
+  const BASE_XP = 10;
+  const COMBO_BONUS = 5;
+  const RUN_TIMEOUT = 1500;
 
   let area, stages, idx, combo, gained, runCorrect, runBestCombo, worldId, onComplete;
 
@@ -23,17 +24,27 @@
     stages = content && content.stages ? content.stages : [];
     idx = 0; combo = 0; gained = 0; runCorrect = 0; runBestCombo = 0;
     if (!stages.length) { area.innerHTML = '<div class="coming-soon"><p class="big">🚧 BIENTÔT 🚧</p></div>'; return; }
-    showLesson();
+    showStage();
   }
 
-  // --------- barre de progression du monde ----------
+  // --------- comptage des défis (les chapitres ne comptent pas) ----------
+  function challengeTotal() {
+    let n = 0; for (const s of stages) if (s.type !== 'chapter') n++; return n;
+  }
+  function challengesDoneBefore(i) {
+    let n = 0; for (let k = 0; k < i; k++) if (stages[k].type !== 'chapter') n++; return n;
+  }
+
+  // --------- barre de progression ----------
   function header() {
-    const pct = Math.round((idx / stages.length) * 100);
+    const done = challengesDoneBefore(idx);
+    const total = challengeTotal();
+    const pct = Math.round((done / total) * 100);
     return `
       <div class="run-top">
         <div class="run-prog"><i style="width:${pct}%"></i></div>
         <div class="run-meta">
-          <span>DÉFI ${idx + 1}/${stages.length}</span>
+          <span>DÉFI ${done + 1}/${total}</span>
           <span class="combo ${combo >= 2 ? 'hot' : ''}">COMBO ×${combo}</span>
           <span>+${gained} XP</span>
         </div>
@@ -54,13 +65,43 @@
   }
 
   // ---------------------------------------------------------------
-  // Étape 1 : la mini-leçon
+  // Aiguillage d'un stage
   // ---------------------------------------------------------------
-  function showLesson() {
+  function showStage() {
+    if (idx >= stages.length) return finish();
     const st = stages[idx];
-    if (!st.lesson) return showChallenge();
-    const l = st.lesson;
+    if (st.type === 'chapter') return showChapter(st);
+    showLesson(st);
+  }
 
+  function nextStage() {
+    idx += 1;
+    showStage();
+  }
+
+  // ---------------------------------------------------------------
+  // Séparateur de chapitre
+  // ---------------------------------------------------------------
+  function showChapter(st) {
+    area.innerHTML = '';
+    const card = el('div', 'chapter-card');
+    card.innerHTML = `
+      <div class="chapter-kicker">NOUVEAU CHAPITRE</div>
+      <h2 class="chapter-title">${st.title}</h2>
+      ${st.subtitle ? `<p class="chapter-sub">${st.subtitle}</p>` : ''}
+    `;
+    const btn = el('button', 'btn btn--big', 'C\'EST PARTI ▶');
+    btn.addEventListener('click', () => { window.SFX.select(); nextStage(); });
+    card.appendChild(btn);
+    area.appendChild(card);
+  }
+
+  // ---------------------------------------------------------------
+  // Mini-leçon (optionnelle) puis défi
+  // ---------------------------------------------------------------
+  function showLesson(st) {
+    if (!st.lesson) return showChallenge(st);
+    const l = st.lesson;
     area.innerHTML = header();
     const card = el('div', 'lesson-card');
     card.innerHTML = `
@@ -70,21 +111,17 @@
     `;
     if (l.example) card.appendChild(codeBlock(l.example));
     const btn = el('button', 'btn', 'J\'AI COMPRIS ▶');
-    btn.addEventListener('click', () => { window.SFX.move(); showChallenge(); });
+    btn.addEventListener('click', () => { window.SFX.move(); showChallenge(st); });
     card.appendChild(btn);
     area.appendChild(card);
   }
 
-  // ---------------------------------------------------------------
-  // Étape 2 : le défi (aiguillage par type)
-  // ---------------------------------------------------------------
-  function showChallenge() {
-    const st = stages[idx];
+  function showChallenge(st) {
     if (st.type === 'editor') showEditor(st);
     else showQcm(st);
   }
 
-  // --------- QCM "que renvoie ce code ?" ----------
+  // --------- QCM ----------
   function showQcm(st) {
     area.innerHTML = header();
     const card = el('div', 'challenge-card');
@@ -94,10 +131,9 @@
 
     const opts = el('div', 'options');
     let locked = false;
-
     st.options.forEach((label, i) => {
       const o = el('button', 'option');
-      o.appendChild(codeSpan(label));
+      const span = el('span'); span.textContent = label; o.appendChild(span);
       o.addEventListener('click', () => {
         if (locked) return;
         if (i === st.answer) {
@@ -115,15 +151,8 @@
       });
       opts.appendChild(o);
     });
-
     card.appendChild(opts);
     area.appendChild(card);
-  }
-
-  function codeSpan(text) {
-    const s = el('span');
-    s.textContent = text;
-    return s;
   }
 
   // --------- Mini-éditeur ----------
@@ -131,7 +160,7 @@
     area.innerHTML = header();
     const card = el('div', 'challenge-card');
     card.innerHTML = `
-      <div class="ch-tag">⌨️ ÉCRIS DU CODE</div>
+      <div class="ch-tag">${st.review ? '🔁 RÉVISION' : '⌨️ ÉCRIS DU CODE'}</div>
       <p class="ch-question">${st.prompt}</p>
     `;
 
@@ -154,8 +183,6 @@
     const actions = el('div', 'editor-actions');
     const run = el('button', 'btn', '▶ VÉRIFIER');
     actions.appendChild(run);
-
-    // Bouton "voir la solution" : caché tant qu'on n'a pas raté une fois.
     const solBtn = el('button', 'btn btn--ghost', '💡 VOIR LA SOLUTION');
     solBtn.style.display = 'none';
     actions.appendChild(solBtn);
@@ -202,14 +229,18 @@
   }
 
   // ---------------------------------------------------------------
-  // Exécution sécurisée du code du joueur
-  // Worker isolé + chrono : une boucle infinie est coupée sans figer
-  // l'onglet. Repli sur exécution directe si les Workers sont indispo.
+  // Exécution sécurisée du code (Worker + chrono anti boucle infinie)
   // ---------------------------------------------------------------
   const WORKER_SRC = `
     self.onmessage = function (e) {
       var d = e.data, userCode = d.userCode, fnName = d.fnName, cases = d.cases;
-      function fmt(v){ if (typeof v === 'string') return '"' + v + '"'; if (v === undefined) return 'undefined'; return String(v); }
+      function fmt(v){
+        if (typeof v === 'string') return '"' + v + '"';
+        if (v === undefined) return 'undefined';
+        if (Array.isArray(v)) return '[' + v.map(fmt).join(', ') + ']';
+        return String(v);
+      }
+      function args(a){ return a.map(fmt).join(', '); }
       var fn;
       try {
         fn = (new Function(userCode + '\\n; return typeof ' + fnName + " === 'function' ? " + fnName + ' : undefined;'))();
@@ -219,9 +250,9 @@
       for (var i = 0; i < cases.length; i++) {
         var c = cases[i], got;
         try { got = fn.apply(null, c.args); }
-        catch (err) { self.postMessage({ ok:false, message: fnName + '(' + c.args.join(', ') + ') a planté : ' + err.message }); return; }
+        catch (err) { self.postMessage({ ok:false, message: fnName + '(' + args(c.args) + ') a planté : ' + err.message }); return; }
         var same = (got === c.expected) || (got !== got && c.expected !== c.expected);
-        if (!same) { self.postMessage({ ok:false, message: fnName + '(' + c.args.join(', ') + ') a renvoyé ' + fmt(got) + ' au lieu de ' + fmt(c.expected) }); return; }
+        if (!same) { self.postMessage({ ok:false, message: fnName + '(' + args(c.args) + ') a renvoyé ' + fmt(got) + ' au lieu de ' + fmt(c.expected) }); return; }
         passed++;
       }
       self.postMessage({ ok:true, passed: passed, total: cases.length });
@@ -236,7 +267,7 @@
         url = URL.createObjectURL(blob);
         worker = new Worker(url);
       } catch (e) {
-        resolve(runTestsSync(userCode, fnName, cases)); // pas de worker → exécution directe
+        resolve(runTestsSync(userCode, fnName, cases));
         return;
       }
       const cleanup = () => { worker.terminate(); URL.revokeObjectURL(url); };
@@ -250,7 +281,6 @@
     });
   }
 
-  // Repli synchrone (si Worker indisponible). Aucune protection anti-boucle.
   function runTestsSync(userCode, fnName, cases) {
     let fn;
     try {
@@ -261,9 +291,9 @@
     for (const c of cases) {
       let got;
       try { got = fn(...c.args); }
-      catch (e) { return { ok: false, message: `${fnName}(${c.args.join(', ')}) a planté : ${e.message}` }; }
+      catch (e) { return { ok: false, message: `${fnName}(${c.args.map(fmt).join(', ')}) a planté : ${e.message}` }; }
       if (!Object.is(got, c.expected)) {
-        return { ok: false, message: `${fnName}(${c.args.join(', ')}) a renvoyé ${fmt(got)} au lieu de ${fmt(c.expected)}.` };
+        return { ok: false, message: `${fnName}(${c.args.map(fmt).join(', ')}) a renvoyé ${fmt(got)} au lieu de ${fmt(c.expected)}.` };
       }
       passed++;
     }
@@ -273,11 +303,12 @@
   function fmt(v) {
     if (typeof v === 'string') return `"${v}"`;
     if (v === undefined) return 'undefined';
+    if (Array.isArray(v)) return '[' + v.map(fmt).join(', ') + ']';
     return String(v);
   }
 
   // ---------------------------------------------------------------
-  // Gestion de la réussite d'un défi
+  // Réussite d'un défi
   // ---------------------------------------------------------------
   function breakCombo() { combo = 0; refreshHeader(); }
 
@@ -291,7 +322,7 @@
     S.recordAnswer(true);
     S.recordCombo(combo);
     const leveledUp = S.addXp(xp);
-    S.setWorldProgress(worldId, (idx + 1) / stages.length);
+    S.setWorldProgress(worldId, (challengesDoneBefore(idx) + 1) / challengeTotal());
 
     window.SFX.correct();
     if (combo >= 2) window.SFX.combo(combo);
@@ -313,18 +344,14 @@
   }
 
   function showFeedback(st, xp) {
+    const last = idx + 1 >= stages.length;
     const fb = el('div', 'feedback');
     fb.innerHTML = `
       <div class="fb-head">✅ BRAVO ! <span class="fb-xp">+${xp} XP${combo >= 2 ? ` (combo ×${combo})` : ''}</span></div>
       ${st.explain ? `<p class="fb-explain">💡 ${st.explain}</p>` : ''}
     `;
-    const next = el('button', 'btn btn--big', idx + 1 < stages.length ? 'CONTINUER ▶' : 'VOIR LE BILAN 🏁');
-    next.addEventListener('click', () => {
-      window.SFX.move();
-      idx += 1;
-      if (idx < stages.length) showLesson();
-      else finish();
-    });
+    const next = el('button', 'btn btn--big', last ? 'VOIR LE BILAN 🏁' : 'CONTINUER ▶');
+    next.addEventListener('click', () => { window.SFX.move(); nextStage(); });
     fb.appendChild(next);
     area.appendChild(fb);
     fb.scrollIntoView({ behavior: 'smooth', block: 'end' });
@@ -339,13 +366,14 @@
     if (worldId === 'js' && S.awardBadge('js_done')) window.CQ.toast('🏅 BADGE : MAÎTRE JS !');
     window.SFX.levelup();
 
+    const total = challengeTotal();
     area.innerHTML = `
       <div class="summary">
         <div class="summary-title">🏁 MONDE TERMINÉ</div>
         <div class="summary-icon">${content ? content.icon : '🎉'}</div>
         <div class="stat-grid">
           <div class="stat-box"><div class="num">+${gained}</div><div class="lbl">XP gagnée</div></div>
-          <div class="stat-box"><div class="num">${runCorrect}/${stages.length}</div><div class="lbl">Défis réussis</div></div>
+          <div class="stat-box"><div class="num">${runCorrect}/${total}</div><div class="lbl">Défis réussis</div></div>
           <div class="stat-box"><div class="num">×${runBestCombo}</div><div class="lbl">Meilleur combo</div></div>
         </div>
         <div class="summary-actions">
@@ -353,7 +381,6 @@
           <button class="btn" id="sum-back">‹ MONDES</button>
         </div>
       </div>`;
-
     area.querySelector('#sum-replay').addEventListener('click', () => { window.SFX.select(); start(worldId, area, onComplete); });
     area.querySelector('#sum-back').addEventListener('click', () => { window.SFX.back(); if (onComplete) onComplete(); });
   }
