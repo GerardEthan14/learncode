@@ -129,14 +129,18 @@
     if (st.code) card.appendChild(codeBlock(st.code));
     card.appendChild(el('p', 'ch-question', st.question));
 
+    // On mélange les réponses pour que la bonne ne soit pas toujours à la
+    // même position. On retient laquelle est correcte via un drapeau.
+    const shuffled = shuffle(st.options.map((label, i) => ({ label, correct: i === st.answer })));
+
     const opts = el('div', 'options');
     let locked = false;
-    st.options.forEach((label, i) => {
+    shuffled.forEach((opt) => {
       const o = el('button', 'option');
-      const span = el('span'); span.textContent = label; o.appendChild(span);
+      const span = el('span'); span.textContent = opt.label; o.appendChild(span);
       o.addEventListener('click', () => {
         if (locked) return;
-        if (i === st.answer) {
+        if (opt.correct) {
           o.classList.add('good');
           locked = true;
           win(st);
@@ -153,6 +157,16 @@
     });
     card.appendChild(opts);
     area.appendChild(card);
+  }
+
+  // Mélange (Fisher–Yates) une copie du tableau.
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
   }
 
   // --------- Mini-éditeur ----------
