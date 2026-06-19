@@ -279,6 +279,18 @@ code { font-family: 'VT323', monospace; color: var(--neon-3); background: rgba(0
 .badges { display: flex; flex-wrap: wrap; gap: 12px; }
 .badge { background: var(--bg-2); border: 2px dashed var(--dim); padding: 10px 14px; font-size: 18px; color: var(--dim); }
 .badge.earned { border-style: solid; border-color: var(--neon-3); color: var(--neon-3); }
+.sync-help { font-size: 18px; color: var(--dim); }
+.sync-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.sync-box:empty { display: none; }
+.sync-box { background: var(--bg-2); border: 2px dashed var(--dim); padding: 16px; display: grid; gap: 12px; }
+.sync-code {
+  width: 100%; resize: vertical; font-family: 'VT323', monospace; font-size: 16px;
+  background: #05040d; color: var(--neon); border: 2px solid var(--neon); padding: 10px;
+  word-break: break-all;
+}
+.sync-code:focus { outline: none; box-shadow: 0 0 12px var(--neon); }
+.copy-ok { color: var(--ok); font-size: 19px; }
+
 .reset-btn { font-family: var(--font-title); font-size: 11px; color: var(--ko); background: transparent; border: 2px solid var(--ko); padding: 10px; cursor: pointer; justify-self: center; }
 .reset-btn:hover { background: var(--ko); color: var(--bg); }
 

@@ -126,6 +126,39 @@
       data.createdAt = created;
       save();
     },
+
+    // --- synchro manuelle entre appareils (sans serveur) ---
+    // Génère un code texte contenant le profil + ses stats.
+    exportCode() {
+      const payload = { v: 1, name: profile, data };
+      const json = JSON.stringify(payload);
+      return btoa(unescape(encodeURIComponent(json))); // base64, accents gérés
+    },
+
+    // Recrée le profil contenu dans le code et s'y connecte.
+    importCode(code) {
+      let payload;
+      try {
+        const json = decodeURIComponent(escape(atob((code || '').trim())));
+        payload = JSON.parse(json);
+      } catch {
+        return { ok: false, error: 'Code illisible (copie incomplète ?).' };
+      }
+      if (!payload || typeof payload.name !== 'string' || typeof payload.data !== 'object') {
+        return { ok: false, error: 'Ce code ne ressemble pas à une sauvegarde CODEQUEST.' };
+      }
+      const name = payload.name.trim();
+      if (!name) return { ok: false, error: 'Profil introuvable dans le code.' };
+
+      const clean = Object.assign(structuredClone(DEFAULT), payload.data);
+      localStorage.setItem(saveKey(name), JSON.stringify(clean));
+      const profiles = listProfiles();
+      if (!profiles.find(p => p.toLowerCase() === name.toLowerCase())) {
+        profiles.push(name); saveProfilesList(profiles);
+      }
+      this.login(name); // charge le profil importé
+      return { ok: true, name };
+    },
   };
 
   window.GameState = GameState;

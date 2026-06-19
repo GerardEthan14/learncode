@@ -171,6 +171,15 @@
       </div>
       <h3 class="screen-title" style="font-size:14px;margin-top:8px;">BADGES</h3>
       <div class="badges">${badgeHtml}</div>
+
+      <h3 class="screen-title" style="font-size:14px;margin-top:8px;">SYNCHRO ENTRE APPAREILS</h3>
+      <p class="sync-help">Tes stats sont sauvées sur cet appareil uniquement. Pour les retrouver ailleurs : exporte un code ici, puis importe-le sur l'autre appareil.</p>
+      <div class="sync-actions">
+        <button class="btn" id="btn-export">📤 EXPORTER</button>
+        <button class="btn" id="btn-import">📥 IMPORTER</button>
+      </div>
+      <div class="sync-box" id="sync-box"></div>
+
       <button class="reset-btn" id="reset-btn">⟲ REMETTRE CE PROFIL À ZÉRO</button>
     `;
 
@@ -179,6 +188,60 @@
         window.SFX.back();
         S.reset();
         renderStats();
+      }
+    });
+
+    document.getElementById('btn-export').addEventListener('click', showExport);
+    document.getElementById('btn-import').addEventListener('click', showImport);
+  }
+
+  // --------- Synchro : export ---------
+  function showExport() {
+    window.SFX.select();
+    const code = S.exportCode();
+    const box = document.getElementById('sync-box');
+    box.innerHTML = `
+      <div class="sol-tag">📤 TON CODE DE SAUVEGARDE</div>
+      <textarea class="sync-code" id="export-code" readonly rows="4"></textarea>
+      <p class="sync-help">Copie tout ce code et garde-le (mail, note…). Sur l'autre appareil : ouvre le jeu → Mes stats → IMPORTER.</p>
+      <button class="btn" id="copy-code">📋 COPIER</button>
+      <span class="copy-ok" id="copy-ok"></span>
+    `;
+    const ta = document.getElementById('export-code');
+    ta.value = code;
+    ta.focus(); ta.select();
+    document.getElementById('copy-code').addEventListener('click', async () => {
+      ta.select();
+      let done = false;
+      try { await navigator.clipboard.writeText(code); done = true; }
+      catch { try { done = document.execCommand('copy'); } catch {} }
+      document.getElementById('copy-ok').textContent = done ? '✅ copié !' : 'sélectionne et Ctrl+C';
+      window.SFX.correct();
+    });
+  }
+
+  // --------- Synchro : import ---------
+  function showImport() {
+    window.SFX.select();
+    const box = document.getElementById('sync-box');
+    box.innerHTML = `
+      <div class="sol-tag">📥 COLLE TON CODE</div>
+      <textarea class="sync-code" id="import-code" rows="4" placeholder="colle ici le code exporté depuis l'autre appareil"></textarea>
+      <p class="sync-help">⚠️ Cela remplacera les stats de ce profil par celles du code.</p>
+      <button class="btn" id="do-import">✅ IMPORTER CE CODE</button>
+      <span class="copy-ok" id="import-msg"></span>
+    `;
+    document.getElementById('do-import').addEventListener('click', () => {
+      const val = document.getElementById('import-code').value;
+      const res = S.importCode(val);
+      const msg = document.getElementById('import-msg');
+      if (res.ok) {
+        window.SFX.levelup();
+        toast(`✅ Stats de "${res.name}" importées !`);
+        renderStats();
+      } else {
+        window.SFX.wrong();
+        msg.textContent = '❌ ' + res.error;
       }
     });
   }
