@@ -1,8 +1,12 @@
 # 🕹️ CODEQUEST
 
-Apprends les bases du **développement web** (HTML / CSS / JS) sous forme de **jeu rétro arcade**.
+Jeu rétro arcade pour s'entraîner aux compétences du métier de **Développeur IoT**.
 
-Projet perso pour tester l'envie de faire du code avant des cours du soir — orienté un peu **backend** (logique JS).
+Parcours : **JS** (logique, cœur de Node-RED/n8n) · **Git/GitHub** · **Linux/Terminal** ·
+**IoT & MQTT** (Node-RED) · **Python**.
+
+> Les mondes **HTML** et **CSS** sont conservés dans le code mais masqués de l'interface
+> (réactivables un jour). Le jeu est désormais orienté vers la stack du poste visé.
 
 ## ▶️ Lancer le jeu
 

@@ -7,15 +7,25 @@
   const S = window.GameState;
 
   // --- Définition des mondes ---
-  // `requires` = monde prérequis. Le verrou ne s'applique QUE si ce prérequis
-  // a déjà du contenu jouable (sinon on ne pourrait jamais le débloquer).
+  // `hidden: true` => conservé dans le code mais masqué de l'interface.
+  // Parcours réorienté vers le métier de Développeur IoT.
   const WORLDS = [
+    { id: 'js',     icon: '🧠', name: 'JS / LOGIQUE', accent: '#ffe600',
+      desc: 'Le langage au cœur de Node-RED et n8n. QCM + mini-éditeur.' },
+    { id: 'git',    icon: '🔀', name: 'GIT / GITHUB', accent: '#b388ff',
+      desc: 'Versionner et partager ton code. Indispensable en équipe.' },
+    { id: 'linux',  icon: '🐧', name: 'LINUX / TERMINAL', accent: '#38ff9b',
+      desc: 'Piloter un serveur Ubuntu en ligne de commande.' },
+    { id: 'iot',    icon: '📡', name: 'IoT & MQTT', accent: '#00ffd5',
+      desc: 'Objets connectés, messages MQTT, flux Node-RED.' },
+    { id: 'python', icon: '🐍', name: 'PYTHON', accent: '#ff7a45',
+      desc: 'Le 2e langage du métier. Lis et comprends du code Python.' },
+
+    // --- Mondes conservés mais masqués (réactivables un jour) ---
     { id: 'html', icon: '🧱', name: 'HTML', accent: '#ff7a45',
-      desc: 'Construis la structure des pages, balise par balise.', requires: null },
+      desc: 'Construis la structure des pages, balise par balise.', hidden: true },
     { id: 'css',  icon: '🎨', name: 'CSS',  accent: '#45a6ff',
-      desc: 'Donne style et couleurs. Le monde du peintre rétro.', requires: 'html' },
-    { id: 'js',   icon: '🧠', name: 'JS / LOGIQUE', accent: '#ffe600',
-      desc: 'Le cerveau du code. QCM + mini-éditeur. Proche du backend.', requires: 'css' },
+      desc: 'Donne style et couleurs. Le monde du peintre rétro.', hidden: true },
   ];
 
   function hasContent(id) {
@@ -23,15 +33,17 @@
               window.CQContent[id].stages && window.CQContent[id].stages.length);
   }
   function isUnlocked(w) {
-    return true; // TEMPORAIRE : tous les mondes déverrouillés (aucune condition)
+    return true; // tous les mondes disponibles : parcours libre
   }
 
   const BADGES = [
     { id: 'first_step', icon: '👣', label: 'Premier pas' },
     { id: 'combo_5',    icon: '🔥', label: 'Combo x5' },
-    { id: 'html_done',  icon: '🧱', label: 'Maître HTML' },
-    { id: 'css_done',   icon: '🎨', label: 'Maître CSS' },
     { id: 'js_done',    icon: '🧠', label: 'Maître JS' },
+    { id: 'git_done',   icon: '🔀', label: 'Maître Git' },
+    { id: 'linux_done', icon: '🐧', label: 'Maître Linux' },
+    { id: 'iot_done',   icon: '📡', label: 'Maître IoT' },
+    { id: 'python_done',icon: '🐍', label: 'Maître Python' },
   ];
 
   // ---------------------------------------------------------------
@@ -98,7 +110,7 @@
   function renderWorlds() {
     const list = document.getElementById('worlds-list');
     list.innerHTML = '';
-    WORLDS.forEach(w => {
+    WORLDS.filter(w => !w.hidden).forEach(w => {
       const unlocked = isUnlocked(w);
       const prog = Math.round((S.get().worlds[w.id] || 0) * 100);
       const card = document.createElement('div');

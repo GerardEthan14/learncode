@@ -377,7 +377,9 @@
   function finish() {
     S.setWorldProgress(worldId, 1);
     const content = (window.CQContent || {})[worldId];
-    if (worldId === 'js' && S.awardBadge('js_done')) window.CQ.toast('🏅 BADGE : MAÎTRE JS !');
+    if (S.awardBadge(worldId + '_done')) {
+      window.CQ.toast('🏅 BADGE : ' + (content ? content.name : worldId.toUpperCase()) + ' TERMINÉ !');
+    }
     window.SFX.levelup();
 
     const total = challengeTotal();
